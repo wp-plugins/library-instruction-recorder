@@ -4,7 +4,7 @@ Donate link: http://library.gsu.edu/giving/
 Tags: library, instruction, teaching, library instruction recorder, instruction scheduling, library instruction, bibliographic instruction
 Requires at least: 3.6
 Tested up to: 3.9.2
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -23,6 +23,8 @@ The Library Instruction Recorder (LIR) is designed to record library instruction
 * Ability to duplicate classes for multiple sessions.
 * Statistical reports can be narrowed by date range or primary librarian.  Reports are downloadable as .csv files.
 * Email reminder to enter the number of students who attended the class.
+
+Visit [LIR's Bitbucket page](https://bitbucket.org/gsulibwebmaster/library-instruction-recorder) to submit issues, contribute to the wiki, contribute to the source code, and to check out the development version of the plugin!
 
 == Requirements ==
 
@@ -43,7 +45,11 @@ The Library Instruction Recorder is specifically designed to be simple, without 
 
 = What about resource scheduling? Or .ics files? Or attaching instructional materials? Or making me a cup of coffee? =
 
-Right now there are no plans for major enhancements to LIR.  
+Right now there are no plans for major enhancements to LIR.
+
+= How/Where should I report problems? =
+
+You can submit issue tickets to our [Bitbucket issue tracker](https://bitbucket.org/gsulibwebmaster/library-instruction-recorder/issues).
 
 == Screenshots ==
 
@@ -55,10 +61,18 @@ Right now there are no plans for major enhancements to LIR.
 
 == Upgrade Notice ==
 
+= 1.0.1 =
+Fixes a few bugs including a timezone related bug.
+
 = 1.0.0 =
 Initial release so why not install?
 
 == Changelog ==
+
+= 1.0.1 =
+* Moved version checking to admin_init hook.
+* Fixed a bug where saving the settings would remove the version number from the options table.
+* The WordPress timezone setting is now used when using PHP date (potential issue with DST when using UTC offsets).
 
 = 1.0.0 =
 * Initial release!

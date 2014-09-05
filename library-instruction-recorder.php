@@ -3,7 +3,7 @@
    Plugin Name: Library Instruction Recorder
    Plugin URI: http://bitbucket.org/gsulibwebmaster/library-instruction-recorder
    Description: A plugin for recording library instruction events and their associated data.
-   Version: 1.0.0
+   Version: 1.0.1
    Author: Georgia State University Library
    Author URI: http://library.gsu.edu/
    License: GPLv3
@@ -38,15 +38,15 @@ if(!class_exists('LIR')) {
       const SLUG = 'LIR';
       const OPTIONS = 'lir_options';
       const OPTIONS_GROUP = 'lir_options_group';
-      const VERSION = '1.0.0';
+      const VERSION = '1.0.1';
       const MIN_VERSION = '3.6';
       const TABLE_POSTS = '_posts';
       const TABLE_META = '_meta';
       const TABLE_FLAGS = '_flags';
       const SCHEDULE_TIME = '01:00:00';
       private static $defaultOptions = array(
-         'debug'           =>  false,
          'version'         =>  self::VERSION,
+         'debug'           =>  false,
          'name'            =>  self::NAME,
          'slug'            =>  self::SLUG,
          'intervalLength'  =>  15,
@@ -122,12 +122,8 @@ if(!class_exists('LIR')) {
          }
 
          // If the option already exists it will not be overwritten.
-         // Do not autoload the options, they are only used on select admin pages.
+         // Do not autoload the options, they are only used on admin pages.
          add_option(self::OPTIONS, self::$defaultOptions, '', 'no');
-         // Retrieves current options. This is what we can use for version checking.
-         $options = get_option(self::OPTIONS);
-
-         // VERSION CHECKING FOR DATABASE UPDATES
 
          // Add LIR tables to the database if they do not exist.
          global $wpdb;
@@ -237,12 +233,23 @@ if(!class_exists('LIR')) {
 
       /*
          Function: adminInit
-            Registers an option group so that the settings page functions and can be sanitized.
+            Performs plugin updates, registers an option group so that the settings page
+            functions and can be sanitized, makes sure the scheduler is set, and catches
+            the post action for downloading reports.
 
          See Also:
-            <settingsPage> and <sanitizeSettings>
+            <settingsPage>, <sanitizeSettings>, and <generateReport>
       */
       public function adminInit() {
+         $this->init();
+
+         // Plugin upgrades are performed here.
+         if($this->options['version'] != self::VERSION) {
+            // Update options to current version.
+            $this->options['version'] = self::VERSION;
+            update_option(self::OPTIONS, $this->options);
+         }
+
          register_setting(self::OPTIONS_GROUP, self::OPTIONS, array(&$this, 'sanitizeSettings'));
 
          // Setup/make sure scheduler is setup.
@@ -820,7 +827,8 @@ if(!class_exists('LIR')) {
                         $_POST['class_length'] = (strtotime($_POST['class_end']) - strtotime($_POST['class_start'])) / 60;
                      }
                      else {
-                        date_default_timezone_set('EST5EDT'); // This will probably be an issue at some point.
+                        $this->setTimeZone();
+
                         $minutes = date('i', strtotime("+15 minutes")) - date('i', strtotime("+15 minutes")) % 15;
                         $time = date('g:', strtotime("+15 minutes")).(($minutes) ? $minutes : '00').date(' A');
                      }
@@ -1618,7 +1626,8 @@ if(!class_exists('LIR')) {
 
       /*
          Function: sanitizeSettings
-            Sanitizes all inputs that are run through the settings page.
+            Sanitizes all inputs that are run through the settings page. Also adds version so it doesn't
+            get removed from the options.
 
          Inputs:
             input  -  Array of options from the LIR settings page.
@@ -1630,9 +1639,12 @@ if(!class_exists('LIR')) {
             <settingsPage>
       */
       public function sanitizeSettings($input) {
+         $this->init();
+
+         $input['version'] = $this->options['version'];
+         $input['debug'] = ($input['debug'] == 'on') ? 'on' : '';
          $input['name'] = sanitize_text_field($input['name']);
          $input['slug'] = sanitize_text_field($input['slug']);
-         $input['debug'] = ($input['debug'] == 'on') ? 'on' : '';
          $input['intervalLength'] = absint($input['intervalLength']);
          $input['intervalAmount'] = absint($input['intervalAmount']);
 
@@ -1719,6 +1731,26 @@ if(!class_exists('LIR')) {
          // If 0 notifications we still want to update the menu, just in case (ex: last notification was handled and menu needed to be updated to reflect that 1 -> 0).
          $notifications = $count ? ' <span class="update-plugins count-'.$count.'"><span class="update-count">'.$count.'</span></span>' : '';
          $menu[$position][0] = $this->options['slug'].$notifications; // Rewrite the entire name in case this function is called multiple times.
+      }
+
+
+      /*
+         Function: setTimeZone
+            Sets the default timezone that PHP uses with the date function. This will not
+            work correctly if the GMT offset is used and DST is in effect.
+      */
+      private function setTimeZone() {
+         $zoneString = get_option('timezone_string'); // Is the timezone in here?
+         $gmtOffset = get_option('gmt_offset'); // How about in here?
+
+         if(!empty($zoneString)) {
+            date_default_timezone_set($zoneString);
+         }
+         else if(!empty($gmtOffset)) {
+            // This will not work correctly if the timezone uses DST (during DST).
+            date_default_timezone_set(timezone_name_from_abbr(null, $gmtOffset * 3600, 0));
+         }
+         // else... what now?
       }
 
 
