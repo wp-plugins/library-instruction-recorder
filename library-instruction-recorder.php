@@ -3,7 +3,7 @@
    Plugin Name: Library Instruction Recorder
    Plugin URI: http://bitbucket.org/gsulibwebmaster/library-instruction-recorder
    Description: A plugin for recording library instruction events and their associated data.
-   Version: 1.0.1
+   Version: 1.0.2
    Author: Georgia State University Library
    Author URI: http://library.gsu.edu/
    License: GPLv3
@@ -38,7 +38,7 @@ if(!class_exists('LIR')) {
       const SLUG = 'LIR';
       const OPTIONS = 'lir_options';
       const OPTIONS_GROUP = 'lir_options_group';
-      const VERSION = '1.0.1';
+      const VERSION = '1.0.2';
       const MIN_VERSION = '3.6';
       const TABLE_POSTS = '_posts';
       const TABLE_META = '_meta';
@@ -72,7 +72,6 @@ if(!class_exists('LIR')) {
          add_action('admin_enqueue_scripts', array(&$this, 'addCssJS'));
          // A hook needs to be created to add this to the scheduler (weird, I know).
          add_action(self::SLUG.'_schedule', array(&$this, 'emailReminders'));
-         //add_filter('the_content', array(&$this, 'easterEgg')); // For testing purposes.
       }
 
 
@@ -279,8 +278,9 @@ if(!class_exists('LIR')) {
          // If admin page doesn't belong to LIR, do not add CSS and JS.
          if($parent_file != self::SLUG) { return; }
 
-         wp_enqueue_script(self::SLUG.'-admin-JS', plugins_url('js/admin.js', __FILE__), array('jquery', 'jquery-ui-datepicker', 'jquery-ui-dialog'), self::VERSION);
-         wp_enqueue_script(self::SLUG.'-admin-dataTables-JS', plugins_url('js/jquery.dataTables.min.js', __FILE__), array('jquery'), '1.10.1');
+         // Register DataTables so that it can be a requirement for the admin.js script.
+         wp_register_script(self::SLUG.'-dataTables', plugins_url('js/jquery.dataTables.min.js', __FILE__), array('jquery'), '1.10.1');
+         wp_enqueue_script(self::SLUG.'-admin-JS', plugins_url('js/admin.js', __FILE__), array('jquery', self::SLUG.'-dataTables', 'jquery-ui-datepicker', 'jquery-ui-dialog'), self::VERSION);
          wp_enqueue_style(self::SLUG.'-admin-Css', plugins_url('css/admin.css', __FILE__), array(), self::VERSION);
          wp_enqueue_style(self::SLUG.'-jquery-ui-redmond', plugins_url('css/jquery-ui/redmond/jquery-ui.min.css', __FILE__), array(), '1.10.3');
          wp_enqueue_style(self::SLUG.'-dataTables-Css', plugins_url('css/dataTables/css/jquery.dataTables.min.css', __FILE__), array(), '1.10.1');

@@ -4,7 +4,7 @@ Donate link: http://library.gsu.edu/giving/
 Tags: library, instruction, teaching, library instruction recorder, instruction scheduling, library instruction, bibliographic instruction
 Requires at least: 3.6
 Tested up to: 3.9.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -61,6 +61,9 @@ You can submit issue tickets to our [Bitbucket issue tracker](https://bitbucket.
 
 == Upgrade Notice ==
 
+= 1.0.2 =
+Updated script loading order for the plugin.
+
 = 1.0.1 =
 Fixes a few bugs including a timezone related bug.
 
@@ -68,6 +71,9 @@ Fixes a few bugs including a timezone related bug.
 Initial release so why not install?
 
 == Changelog ==
+
+= 1.0.2 =
+* Tweaked script loading to make sure dependencies are loaded first.
 
 = 1.0.1 =
 * Moved version checking to admin_init hook.
