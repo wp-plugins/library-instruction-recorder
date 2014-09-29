@@ -58,6 +58,13 @@ jQuery(function($) {
 
    // DataTables for the class listing (default page) table.
    $('#classListingTable').DataTable({
+      // State saving fun.
+      stateSave: true,
+      stateDuration: 0, // -1: session storage, 0: indefinite (local), > 0: storage (local) length in seconds
+      stateLoadParams: function(settings, data) {
+         settings._iDisplayLength = data.length; // number of records
+         return false; // stop loading any other saved settings
+      },
       // Disable sorting of first column.
       aoColumnDefs: [{
          bSortable: false,

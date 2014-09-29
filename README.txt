@@ -4,7 +4,7 @@ Donate link: http://library.gsu.edu/giving/
 Tags: library, instruction, teaching, library instruction recorder, instruction scheduling, library instruction, bibliographic instruction
 Requires at least: 3.6
 Tested up to: 3.9.2
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -41,7 +41,7 @@ Visit [LIR's Bitbucket page](https://bitbucket.org/gsulibwebmaster/library-instr
 
 = Why did you make this when there are so many other tools out there? =
 
-The Library Instruction Recorder is specifically designed to be simple, without a lot of the features often found in larger and more complex resource scheduling tools.  By reducing unnecessary features, librarians are able to easily record sessions and get statistical reports easily.
+The Library Instruction Recorder is specifically designed to be simple, without a lot of the features often found in larger and more complex resource scheduling tools.  By reducing unnecessary features, librarians are able to quickly record sessions and get statistical reports easily.
 
 = What about resource scheduling? Or .ics files? Or attaching instructional materials? Or making me a cup of coffee? =
 
@@ -61,6 +61,9 @@ You can submit issue tickets to our [Bitbucket issue tracker](https://bitbucket.
 
 == Upgrade Notice ==
 
+= 1.1.0 =
+Added persistent record count and smashed some bugs.
+
 = 1.0.2 =
 Updated script loading order for the plugin.
 
@@ -71,6 +74,10 @@ Fixes a few bugs including a timezone related bug.
 Initial release so why not install?
 
 == Changelog ==
+
+= 1.1.0 =
+* Record count ("show entries" number) is now persistent on upcoming classes page (per user).
+* Empty settings can no longer be saved.
 
 = 1.0.2 =
 * Tweaked script loading to make sure dependencies are loaded first.

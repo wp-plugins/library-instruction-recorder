@@ -3,7 +3,7 @@
    Plugin Name: Library Instruction Recorder
    Plugin URI: http://bitbucket.org/gsulibwebmaster/library-instruction-recorder
    Description: A plugin for recording library instruction events and their associated data.
-   Version: 1.0.2
+   Version: 1.1.0
    Author: Georgia State University Library
    Author URI: http://library.gsu.edu/
    License: GPLv3
@@ -38,7 +38,7 @@ if(!class_exists('LIR')) {
       const SLUG = 'LIR';
       const OPTIONS = 'lir_options';
       const OPTIONS_GROUP = 'lir_options_group';
-      const VERSION = '1.0.2';
+      const VERSION = '1.1.0';
       const MIN_VERSION = '3.6';
       const TABLE_POSTS = '_posts';
       const TABLE_META = '_meta';
@@ -1641,12 +1641,15 @@ if(!class_exists('LIR')) {
       public function sanitizeSettings($input) {
          $this->init();
 
+         // Remove spaces!
+         $input = array_map("trim", $input);
+
          $input['version'] = $this->options['version'];
          $input['debug'] = ($input['debug'] == 'on') ? 'on' : '';
-         $input['name'] = sanitize_text_field($input['name']);
-         $input['slug'] = sanitize_text_field($input['slug']);
-         $input['intervalLength'] = absint($input['intervalLength']);
-         $input['intervalAmount'] = absint($input['intervalAmount']);
+         $input['name'] = (empty($input['name'])) ? self::$defaultOptions['name'] : sanitize_text_field($input['name']);
+         $input['slug'] = (empty($input['slug'])) ? self::$defaultOptions['slug'] : sanitize_text_field($input['slug']);
+         $input['intervalLength'] = (absint($input['intervalLength']) < 1) ? self::$defaultOptions['intervalLength'] : absint($input['intervalLength']);
+         $input['intervalAmount'] = (absint($input['intervalAmount']) < 1) ? self::$defaultOptions['intervalAmount'] : absint($input['intervalAmount']);
 
          return $input;
       }
