@@ -3,7 +3,7 @@
    Plugin Name: Library Instruction Recorder
    Plugin URI: http://bitbucket.org/gsulibwebmaster/library-instruction-recorder
    Description: A plugin for recording library instruction events and their associated data.
-   Version: 1.1.0
+   Version: 1.1.1
    Author: Georgia State University Library
    Author URI: http://library.gsu.edu/
    License: GPLv3
@@ -38,7 +38,7 @@ if(!class_exists('LIR')) {
       const SLUG = 'LIR';
       const OPTIONS = 'lir_options';
       const OPTIONS_GROUP = 'lir_options_group';
-      const VERSION = '1.1.0';
+      const VERSION = '1.1.1';
       const MIN_VERSION = '3.6';
       const TABLE_POSTS = '_posts';
       const TABLE_META = '_meta';
@@ -1234,18 +1234,18 @@ if(!class_exists('LIR')) {
 
          // Write data out to CSV file.
          if($result && $fileOutput) {
+            // Send the proper header information for a CSV file.
+            header("Content-type: text/csv");
+            header("Content-Disposition: attachment; filename=".$fileName);
+            header("Pragma: no-cache");
+            header("Expires: 0");
+
             $f = fopen('php://output', 'w');
             fputcsv($f, $column);
 
             foreach($result as $line) {
                fputcsv($f, $line);
             }
-
-            // Send the proper header information for a CSV file.
-            header("Content-type: text/csv");
-            header("Content-Disposition: attachment; filename=".$fileName);
-            header("Pragma: no-cache");
-            header("Expires: 0");
 
             fseek($f, 0);
             fpassthru($f);

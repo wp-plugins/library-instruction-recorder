@@ -3,8 +3,8 @@ Contributors: mbrooks34
 Donate link: http://library.gsu.edu/giving/
 Tags: library, instruction, teaching, library instruction recorder, instruction scheduling, library instruction, bibliographic instruction
 Requires at least: 3.6
-Tested up to: 3.9.2
-Stable tag: 1.1.0
+Tested up to: 3.9.3
+Stable tag: 1.1.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -25,6 +25,10 @@ The Library Instruction Recorder (LIR) is designed to record library instruction
 * Email reminder to enter the number of students who attended the class.
 
 Visit [LIR's Bitbucket page](https://bitbucket.org/gsulibwebmaster/library-instruction-recorder) to submit issues, contribute to the wiki, contribute to the source code, and to check out the development version of the plugin!
+
+== Warning ==
+
+Library Instruction Recorder stores most of its data in custom tables within the WordPress database. **Deleting (*not deactivating*) this plugin will result in the loss of all stored data.** All of the class data is stored in the following tables: <WordPress_table_prefix>LIR_posts, <WordPress_table_prefix>LIR_flags, <WordPress_table_prefix>LIR_meta.
 
 == Requirements ==
 
@@ -61,6 +65,9 @@ You can submit issue tickets to our [Bitbucket issue tracker](https://bitbucket.
 
 == Upgrade Notice ==
 
+= 1.1.1 =
+Fixed a report generation issue.
+
 = 1.1.0 =
 Added persistent record count and smashed some bugs.
 
@@ -74,6 +81,9 @@ Fixes a few bugs including a timezone related bug.
 Initial release so why not install?
 
 == Changelog ==
+
+= 1.1.1 =
+* CSV headers were not being sent before data in some instances of report generation, causing reports to not download. This has been fixed!
 
 = 1.1.0 =
 * Record count ("show entries" number) is now persistent on upcoming classes page (per user).
