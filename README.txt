@@ -4,7 +4,7 @@ Donate link: http://library.gsu.edu/giving/
 Tags: library, instruction, teaching, library instruction recorder, instruction scheduling, library instruction, bibliographic instruction
 Requires at least: 3.6
 Tested up to: 3.9.3
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,7 +28,11 @@ Visit [LIR's Bitbucket page](https://bitbucket.org/gsulibwebmaster/library-instr
 
 == Warning ==
 
-Library Instruction Recorder stores most of its data in custom tables within the WordPress database. **Deleting (*not deactivating*) this plugin will result in the loss of all stored data.** All of the class data is stored in the following tables: <WordPress_table_prefix>LIR_posts, <WordPress_table_prefix>LIR_flags, <WordPress_table_prefix>LIR_meta.
+Library Instruction Recorder stores most of its data in custom tables within the WordPress database. **Deleting (*not deactivating*) this plugin will result in the loss of all stored data.** All of the class data is stored in the following tables by default (not including the WordPress database prefix): LIR_posts, LIR_flags, and LIR_meta.
+
+== Adding/Removing Fields ==
+
+Changing fields on the fields page does not affect classes already entered into LIR. For example, removing the class location "Classroom 1" from the fields page will not remove it from classes that exist with "Classroom 1" selected as the class location, it will just not be available as a choice for new classes. This is the same for all fields on the fields page.
 
 == Requirements ==
 
@@ -65,6 +69,9 @@ You can submit issue tickets to our [Bitbucket issue tracker](https://bitbucket.
 
 == Upgrade Notice ==
 
+= 1.1.2 =
+Fixed a lot of warnings that PHP was throwing.
+
 = 1.1.1 =
 Fixed a report generation issue.
 
@@ -82,8 +89,13 @@ Initial release so why not install?
 
 == Changelog ==
 
+= 1.1.2 =
+* Fixed a TON of undefined index errors!
+* Removed some unnecessary code related to report downloading.
+* Changed a few deprecated WordPress functions.
+
 = 1.1.1 =
-* CSV headers were not being sent before data in some instances of report generation, causing reports to not download. This has been fixed!
+* CSV headers were not being sent before data in some instances of report generation causing reports to not download. This has been fixed!
 
 = 1.1.0 =
 * Record count ("show entries" number) is now persistent on upcoming classes page (per user).

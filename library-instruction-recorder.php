@@ -3,7 +3,7 @@
    Plugin Name: Library Instruction Recorder
    Plugin URI: http://bitbucket.org/gsulibwebmaster/library-instruction-recorder
    Description: A plugin for recording library instruction events and their associated data.
-   Version: 1.1.1
+   Version: 1.1.2
    Author: Georgia State University Library
    Author URI: http://library.gsu.edu/
    License: GPLv3
@@ -38,12 +38,13 @@ if(!class_exists('LIR')) {
       const SLUG = 'LIR';
       const OPTIONS = 'lir_options';
       const OPTIONS_GROUP = 'lir_options_group';
-      const VERSION = '1.1.1';
+      const VERSION = '1.1.2';
       const MIN_VERSION = '3.6';
       const TABLE_POSTS = '_posts';
       const TABLE_META = '_meta';
       const TABLE_FLAGS = '_flags';
       const SCHEDULE_TIME = '01:00:00';
+      const CHARSET = 'utf8';
       private static $defaultOptions = array(
          'version'         =>  self::VERSION,
          'debug'           =>  false,
@@ -87,7 +88,7 @@ if(!class_exists('LIR')) {
          // If these values are set then return.
          if(isset($this->options) && isset($this->tables)) { return; }
          // If not passed call global.
-         if($wpdb == NULL) { global $wpdb; }
+         if(!isset($wpdb)) { global $wpdb; }
 
          // Load options, self::$defaultOptions if they do not exist.
          $this->options = get_option(self::OPTIONS, self::$defaultOptions);
@@ -129,6 +130,10 @@ if(!class_exists('LIR')) {
          require_once(ABSPATH.'wp-admin/includes/upgrade.php'); // Required for dbDelta.
 
          // Post table.
+         /*************************************
+         Eventually change the charset so that it uses what is defined in the WP config file (if there).
+         $wpdb->charset;
+         *************************************/
          $query = "CREATE TABLE IF NOT EXISTS ".$wpdb->prefix.self::SLUG.self::TABLE_POSTS." (
                       id mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT,
                       librarian_name varchar(255) NOT NULL,
@@ -261,7 +266,7 @@ if(!class_exists('LIR')) {
          // if being submitted to the /wp-admin/admin-post.php page. That doesn't work well for this
          // implementation since the report can be generated as a file or on the reports page.
          if(isset($_POST['action']) && ($_POST['action'] == self::SLUG.'_download_report')) {
-            if($_POST['option'] == 'file') {
+            if(isset($_POST['option']) && ($_POST['option'] == 'file')) {
                $this->generateReport(true);
             }
          }
@@ -298,7 +303,7 @@ if(!class_exists('LIR')) {
          $this->init();
 
          // Changes language of "add a class" on the submenu when editing a class.
-         $addClassName = $_GET['edit'] ? 'Add/Edit a Class' : 'Add a Class';
+         $addClassName = isset($_GET['edit']) ? 'Add/Edit a Class' : 'Add a Class';
 
          // Adds the main menu item.
          add_menu_page('', $this->options['slug'], 'read', self::SLUG, array(&$this, 'defaultPage'), '', '58.992');
@@ -332,13 +337,14 @@ if(!class_exists('LIR')) {
             wp_die('You do not have sufficient permissions to access this page.');
          }
 
-         // If user is only a subscriber.
+         // If user is a subscriber.
          $subscriber = current_user_can('edit_posts') ? false : true;
          global $wpdb, $current_user;
          $this->init($wpdb);
          get_currentuserinfo();
          $baseUrl = admin_url('admin.php?page='.self::SLUG);
          $delete = (!empty($_GET['delete'])) ? $_GET['delete'] : NULL;
+         $classRemoved = NULL;
 
 
          // Handle deletion if present.
@@ -347,7 +353,7 @@ if(!class_exists('LIR')) {
             $class = $wpdb->get_row($query);
 
             // Check if the user has permissions to remove the class and verify the nonce.
-            if((current_user_can('manage_options') || $current_user->id == $class->owner_id) && wp_verify_nonce($_GET['n'], self::SLUG.'-delete-'.$delete)) {
+            if((current_user_can('manage_options') || $current_user->ID == $class->owner_id) && wp_verify_nonce($_GET['n'], self::SLUG.'-delete-'.$delete)) {
                $classRemoved = $wpdb->delete($this->tables['posts'], array('id' => $delete), '%d');
             }
          }
@@ -360,18 +366,18 @@ if(!class_exists('LIR')) {
          $incompleteCount = $wpdb->num_rows;
          $previous        = $wpdb->get_results("SELECT * FROM ".$this->tables['posts']." WHERE NOW() > class_end ORDER BY class_start DESC, class_end");
          $previousCount   = $wpdb->num_rows;
-         $myclasses       = $wpdb->get_results("SELECT * FROM ".$this->tables['posts']." WHERE owner_id = ".$current_user->id." ORDER BY class_start DESC, clasS_end");
+         $myclasses       = $wpdb->get_results("SELECT * FROM ".$this->tables['posts']." WHERE owner_id = ".$current_user->ID." ORDER BY class_start DESC, clasS_end");
          $myclassesCount  = $wpdb->num_rows;
 
 
          // Pick list to display and setup for link persistence.
-         if($_GET['incomplete']) {
+         if(isset($_GET['incomplete'])) {
             $result = $incomplete;
          }
-         else if($_GET['previous']) {
+         else if(isset($_GET['previous'])) {
             $result = $previous;
          }
-         else if($_GET['myclasses']) {
+         else if(isset($_GET['myclasses'])) {
             $result = $myclasses;
          }
          else {
@@ -422,20 +428,20 @@ if(!class_exists('LIR')) {
                <?php
                // Upcoming classes.
                echo '<li><a href="'.$baseUrl.'"';
-               if(!$_GET['incomplete'] && !$_GET['previous'] && !$_GET['myclasses']) { echo ' class="current"'; }
+               if(!isset($_GET['incomplete']) && !isset($_GET['previous']) && !isset($_GET['myclasses'])) { echo ' class="current"'; }
                echo '>Upcoming <span class="count">('.$upcomingCount.')</span></a> |</li>';
                // Incomplete classes.
                echo '<li><a href="'.$baseUrl.'&incomplete=1"';
-               if($_GET['incomplete'] == '1') { echo ' class="current"'; }
+               if(isset($_GET['incomplete']) && ($_GET['incomplete'] == '1')) { echo ' class="current"'; }
                echo '>Incomplete <span class="count">('.$incompleteCount.')</span></a> |</li>';
                // Previous classes.
                echo '<li><a href="'.$baseUrl.'&previous=1"';
-               if($_GET['previous'] == '1') { echo ' class="current"'; }
+               if(isset($_GET['previous']) && ($_GET['previous'] == '1')) { echo ' class="current"'; }
                echo '>Previous <span class="count">('.$previousCount.')</span></a></li>';
                // My classes (if not a subscriber).
                if(!$subscriber) {
                   echo '<li>| <a href="'.$baseUrl.'&myclasses=1"';
-                  if($_GET['myclasses'] == '1') { echo ' class="current"'; }
+                  if(isset($_GET['myclasses']) && ($_GET['myclasses'] == '1')) { echo ' class="current"'; }
                   echo '>My Classes <span class="count">('.$myclassesCount.')</span></a></li>';
                }
                ?>
@@ -503,11 +509,11 @@ if(!class_exists('LIR')) {
                   }
 
                   // Edit and delete links for classes.
-                  if($class->owner_id == $current_user->id || current_user_can('manage_options')) {
+                  if($class->owner_id == $current_user->ID || current_user_can('manage_options')) {
                      $var = '';
-                     if($_GET['incomplete'])     { $var = '&incomplete=1'; }
-                     else if($_GET['previous'])  { $var = '&previous=1'; }
-                     else if($_GET['myclasses']) { $var = '&myclasses=1'; }
+                     if(isset($_GET['incomplete']))     { $var = '&incomplete=1'; }
+                     else if(isset($_GET['previous']))  { $var = '&previous=1'; }
+                     else if(isset($_GET['myclasses'])) { $var = '&myclasses=1'; }
 
                      echo ' | <a href="'.$baseUrl.'-add-a-class&edit='.$class->id.'">Edit</a>';
                      echo ' | <a href="#" class="stopLinkFire" onclick="removeClass(\''.$baseUrl.$var.'&delete='.$class->id.'&n='.wp_create_nonce(self::SLUG.'-delete-'.$class->id).'\')">Delete</a>';
@@ -531,7 +537,7 @@ if(!class_exists('LIR')) {
                      echo '</span>';
                   }
 
-                  echo '<span name="Attendance">'; echo $class->attendance ? $class->attendance : 'Not Yet Recorded'; echo '</span>';
+                  echo '<span name="Attendance">'; echo ($class->attendance === NULL) ? 'Not Yet Recorded' : $class->attendance; echo '</span>';
                   echo '<span name="Last_Updated">'.date('n/j/Y g:i A', strtotime($class->last_updated)).'</span>';
                   echo '</td>';
 
@@ -582,7 +588,7 @@ if(!class_exists('LIR')) {
 
 
          // Edit a class setup and permission checking (for edit).
-         if($_GET['edit'] && !$_POST['edit']) {
+         if(isset($_GET['edit']) && !isset($_POST['edit'])) {
             $class = $wpdb->get_row($wpdb->prepare("SELECT * FROM ".$this->tables['posts']." WHERE id = %d", $_GET['edit']));
 
             // Save DB to POST so fields can be populated from same pool during editing and failed submissions.
@@ -591,13 +597,13 @@ if(!class_exists('LIR')) {
             }
 
             // Permission checking.
-            if(!current_user_can('manage_options') && ($current_user->id != $class->owner_id)) {
+            if(!current_user_can('manage_options') && ($current_user->ID != $class->owner_id)) {
                array_push($error, 'You do not have sufficient permissions to edit this class. <a href="'.$baseUrl.'">Add a new class?</a>');
                $_POST['submitted'] = NULL; // Ensures the class is never processed for submission.
             }
          }
          // If this is a copy class request.
-         else if ($_GET['copy']) {
+         else if(isset($_GET['copy'])) {
             $class = $wpdb->get_row($wpdb->prepare("SELECT * FROM ".$this->tables['posts']." WHERE id = %d", $_GET['copy']));
 
             // Save DB to POST so fields can be populated from same pool during editing and failed submissions.
@@ -623,18 +629,18 @@ if(!class_exists('LIR')) {
             if(empty($_POST['audience']))           { array_push($error, 'Missing Field: Audience'); }
 
             // Go to function to insert data into database.
-            if(empty($error)) { $classAdded = $this->addUpdateClass($_POST['edit']); }
+            if(empty($error)) { $classAdded = isset($_POST['edit']) ? $this->addUpdateClass($_POST['edit']) : $this->addUpdateClass(); }
             // This will make things easier from here on down, although should not happen.
             if($classAdded === 0) { $classAdded = true; }
             // If update fails with no other errors.
-            if(!$classAdded && empty($error) && $_POST['edit']) { array_push($error, 'An error has occurred while trying to update the class. Please try again.'); }
+            if(!$classAdded && empty($error) && isset($_POST['edit'])) { array_push($error, 'An error has occurred while trying to update the class. Please try again.'); }
             // If insert fails with no other errors.
             else if(!$classAdded && empty($error)) { array_push($error, 'An error has occurred while trying to submit the class. Please try again.'); }
          }
          ?>
 
          <div class="wrap">
-            <h2><?= ($_GET['edit']) ? 'Edit' : 'Add'; ?> a Class</h2>
+            <h2><?= (isset($_GET['edit'])) ? 'Edit' : 'Add'; ?> a Class</h2>
 
             <?php
             // Added for debugging (if set).
@@ -686,13 +692,13 @@ if(!class_exists('LIR')) {
                </div>';
             }
             // Message if class was added.
-            if($classAdded && !$_POST['edit']) {
+            if($classAdded && !isset($_POST['edit'])) {
                echo '<div id="message" class="updated">
                   <p><strong>The class has been added!</strong> Need to <a href="'.$baseUrl.'&edit='.$classAdded.'">edit it</a>? <a href="'.$baseUrl.'&copy='.$classAdded.'">Copy it</a>? Would you like to <a href="'.$baseUrl.'">add a new class?</a></p>
                </div>';
             }
             // Message if class was updated.
-            else if($classAdded && $_POST['edit']) {
+            else if($classAdded && isset($_POST['edit'])) {
                echo '<div id="message" class="updated">
                   <p><strong>The class has been updated!</strong> Need to <a href="'.$baseUrl.'&edit='.$_POST['edit'].'">edit it</a> again? <a href="'.$baseUrl.'&copy='.$_POST['edit'].'">Copy it</a>? Would you like to <a href="'.$baseUrl.'">add a new class?</a></p>
                </div>';
@@ -713,15 +719,15 @@ if(!class_exists('LIR')) {
                         echo '<option';
 
                         // If nothing has been submitted and it's a new submission select current user.
-                        if(($classAdded === NULL) && !($_GET['edit'] || $_GET['copy']) && ($u->display_name == $user_identity)) {
+                        if(($classAdded === NULL) && !(isset($_GET['edit']) || isset($_GET['copy'])) && ($u->display_name == $user_identity)) {
                            echo ' selected="selected"';
                         }
                         // If this is an edit or copy that hasn't been submitted display the previous name.
-                        else if(($classAdded === NULL) && ($_GET['edit'] || $_GET['copy']) && ($u->display_name == $_POST['librarian_name'])) {
+                        else if(($classAdded === NULL) && (isset($_GET['edit']) || isset($_GET['copy'])) && ($u->display_name == $_POST['librarian_name'])) {
                            echo ' selected="selected"';
                         }
                         // If there was a submission error display submitted name.
-                        else if(($classAdded === false) && ($u->display_name == $_POST['librarian_name'])) {
+                        else if(($classAdded === false) && isset($_POST['librarian_name']) && ($u->display_name == $_POST['librarian_name'])) {
                            echo ' selected="selected"';
                         }
                         // After a successful submission.
@@ -743,7 +749,7 @@ if(!class_exists('LIR')) {
                      foreach($user as $u) {
                         if($u->display_name == "admin") { continue; }
 
-                        if(!$classAdded && ($u->display_name == $_POST['librarian2_name'])) {
+                        if(!$classAdded && isset($_POST['librarian2_name']) && ($u->display_name == $_POST['librarian2_name'])) {
                            echo '<option value="'.$u->display_name.'" selected="selected">'.$u->display_name.'</option>';
                         }
                         else {
@@ -778,7 +784,7 @@ if(!class_exists('LIR')) {
 
                            <?php
                            foreach($departmentGroup as $x) {
-                              if(!$classAdded && (esc_attr($x) == $_POST['department_group'])) {
+                              if(!$classAdded && isset($_POST['department_group']) && (esc_attr($x) == $_POST['department_group'])) {
                                  echo '<option value="'.esc_attr($x).'" selected="selected">'.$x.'</option>';
                               }
                               else {
@@ -862,7 +868,7 @@ if(!class_exists('LIR')) {
                          foreach($classLocation as $x) {
                             echo '<option value="'.esc_attr($x).'"';
 
-                            if(!$classAdded && $_POST['class_location'] == esc_attr($x)) {
+                            if(!$classAdded && isset($_POST['class_location']) && ($_POST['class_location'] == esc_attr($x))) {
                                echo ' selected="selected"';
                             }
 
@@ -881,7 +887,7 @@ if(!class_exists('LIR')) {
                         foreach($classType as $x) {
                            echo '<option value="'.esc_attr($x).'"';
 
-                           if(!$classAdded && $_POST['class_type'] == esc_attr($x)) {
+                           if(!$classAdded && isset($_POST['class_type']) && ($_POST['class_type'] == esc_attr($x))) {
                               echo ' selected="selected"';
                            }
 
@@ -900,7 +906,7 @@ if(!class_exists('LIR')) {
                         foreach($audience as $x) {
                            echo '<option value="'.esc_attr($x).'"';
 
-                           if(!$classAdded && $_POST['audience'] == esc_attr($x)) {
+                           if(!$classAdded && isset($_POST['audience']) && ($_POST['audience'] == esc_attr($x))) {
                               echo ' selected="selected"';
                            }
 
@@ -959,7 +965,7 @@ if(!class_exists('LIR')) {
 
                         if(!empty($_POST[$name])) {
                            echo '<tr><th>'.$_POST[$name].'</th>';
-                           echo '<td><input type="checkbox" name="flagValue'.$d.'"'; if($_POST['flagValue'.$d] == 'on') { echo ' checked="checked"'; } echo ' />';
+                           echo '<td><input type="checkbox" name="flagValue'.$d.'"'; if(isset($_POST['flagValue'.$d]) && $_POST['flagValue'.$d] == 'on') { echo ' checked="checked"'; } echo ' />';
                            echo '<input type="hidden" name="flagName'.$d.'" value="'.esc_attr($_POST[$name]).'" /></td></tr>';
                         }
                      }
@@ -968,12 +974,12 @@ if(!class_exists('LIR')) {
 
                   <tr>
                      <th>Number of Students Attended</th>
-                     <td><input type="number" name="attendance" value="<?php if(!$classAdded && !empty($_POST['attendance'])) echo $_POST['attendance']; ?>" /></td>
+                     <td><input type="number" name="attendance" value="<?php if(!$classAdded && isset($_POST['attendance'])) echo $_POST['attendance']; ?>" /></td>
                   </tr>
                </table>
 
                <?php wp_nonce_field(self::SLUG.'_add_class', self::SLUG.'_nonce'); ?>
-               <?php if($_GET['edit']) echo '<input type="hidden" name="edit" value="'.$_GET['edit'].'" />'; ?>
+               <?php if(isset($_GET['edit'])) echo '<input type="hidden" name="edit" value="'.$_GET['edit'].'" />'; ?>
 
                <p class="submit">
                   <input type="submit" name="submitted" class="button-primary" value="Submit" />&nbsp;&nbsp;
@@ -1008,25 +1014,39 @@ if(!class_exists('LIR')) {
          $myQuery .= $this->tables['posts'].' SET';
 
          // Not NULL columns.
-         $myQuery .= ' librarian_name = %s,';
-         array_push($dataTypes, $_POST['librarian_name']);
-         $myQuery .= ' instructor_name = %s,';
-         array_push($dataTypes, $_POST['instructor_name']);
-         $myQuery .= ' class_location = %s,';
-         array_push($dataTypes, $_POST['class_location']);
-         $myQuery .= ' class_type = %s,';
-         array_push($dataTypes, $_POST['class_type']);
-         $myQuery .= ' audience = %s,';
-         array_push($dataTypes, $_POST['audience']);
-         $myQuery .= ' department_group = %s,';
-         array_push($dataTypes, $_POST['department_group']);
+         if(isset($_POST['librarian_name'])) {
+            $myQuery .= ' librarian_name = %s,';
+            array_push($dataTypes, $_POST['librarian_name']);
+         }
+         if(isset($_POST['instructor_name'])) {
+            $myQuery .= ' instructor_name = %s,';
+            array_push($dataTypes, $_POST['instructor_name']);
+         }
+         if(isset($_POST['class_location'])) {
+            $myQuery .= ' class_location = %s,';
+            array_push($dataTypes, $_POST['class_location']);
+         }
+         if(isset($_POST['class_type'])) {
+            $myQuery .= ' class_type = %s,';
+            array_push($dataTypes, $_POST['class_type']);
+         }
+         if(isset($_POST['audience'])) {
+            $myQuery .= ' audience = %s,';
+            array_push($dataTypes, $_POST['audience']);
+         }
+         if(isset($_POST['department_group'])) {
+            $myQuery .= ' department_group = %s,';
+            array_push($dataTypes, $_POST['department_group']);
+         }
          $myQuery .= ' last_updated_by = %d,';
-         array_push($dataTypes, $current_user->id);
+         array_push($dataTypes, $current_user->ID);
 
          // Datetime columns.
-         $classStart = date('Y-m-d G:i', strtotime($_POST['class_date'].' '.$_POST['class_time']));
-         $myQuery .= ' class_start = \''.$classStart.'\',';
-         $myQuery .= ' class_end = \''.date('Y-m-d G:i', strtotime($classStart.' +'.$_POST['class_length'].' minutes')).'\',';
+         if(isset($_POST['class_date']) && isset($_POST['class_time']) && isset($_POST['class_length'])) {
+            $classStart = date('Y-m-d G:i', strtotime($_POST['class_date'].' '.$_POST['class_time']));
+            $myQuery .= ' class_start = \''.$classStart.'\',';
+            $myQuery .= ' class_end = \''.date('Y-m-d G:i', strtotime($classStart.' +'.$_POST['class_length'].' minutes')).'\',';
+         }
 
          // NULL columns.
          $myQuery .= ' librarian2_name = ';
@@ -1039,8 +1059,21 @@ if(!class_exists('LIR')) {
          if(empty($_POST['class_description'])) { $myQuery .= 'NULL,'; } else { $myQuery .= '%s,'; array_push($dataTypes, $_POST['class_description']); }
          $myQuery .= ' course_number = ';
          if(empty($_POST['course_number']))     { $myQuery .= 'NULL,'; } else { $myQuery .= '%s,'; array_push($dataTypes, $_POST['course_number']); }
+
+         // Attendance is a special case since we differentiate between 0 and empty.
          $myQuery .= ' attendance = ';
-         if(empty($_POST['attendance']))        { $myQuery .= 'NULL';  } else { $myQuery .= '%d';  array_push($dataTypes, $_POST['attendance']); }
+         if(isset($_POST['attendance'])) {
+            if($_POST['attendance'] || (trim($_POST['attendance']) === '0')) {
+               $myQuery .= '%d';  array_push($dataTypes, $_POST['attendance']);
+            }
+            else {
+               $myQuery .= 'NULL';
+            }
+         }
+         // Just in case this is not set in POST (should never happen).
+         else {
+            $myQuery .= 'NULL';
+         }
 
          // If is an update add ID.
          if($id) {
@@ -1050,7 +1083,7 @@ if(!class_exists('LIR')) {
          // If it is not an update include owner ID. This will have to be edited when owners can be changed.
          else {
             $myQuery .= ', owner_id = %d';
-            array_push($dataTypes, $current_user->id);
+            array_push($dataTypes, $current_user->ID);
          }
 
          $success = $wpdb->query($wpdb->prepare($myQuery, $dataTypes));
@@ -1146,7 +1179,7 @@ if(!class_exists('LIR')) {
             </form>
 
             <?php
-            if(isset($_POST['action']) && ($_POST['action'] == self::SLUG.'_download_report') && ($_POST['option'] == 'report')) {
+            if(isset($_POST['action']) && ($_POST['action'] == self::SLUG.'_download_report') && (isset($_POST['option']) && ($_POST['option'] == 'report'))) {
                $this->generateReport(false);
             }
             ?>
@@ -1247,8 +1280,6 @@ if(!class_exists('LIR')) {
                fputcsv($f, $line);
             }
 
-            fseek($f, 0);
-            fpassthru($f);
             fclose($f);
             exit;
          }
@@ -1337,9 +1368,8 @@ if(!class_exists('LIR')) {
             }
             // Remove a department / group field from the database.
             else if(!empty($_POST['deptGroupRemove'])) {
-               $temp = $_POST['deptGroupSB'] + 1;
-
-               if(!empty($temp)) {
+               // Make sure something was selected in the select box.
+               if(!empty($_POST['deptGroupSB']) || ($_POST['deptGroupSB'] === '0')) {
                   unset($departmentGroup[$_POST['deptGroupSB']]);
 
                   if($departmentGroup) {
@@ -1350,6 +1380,7 @@ if(!class_exists('LIR')) {
                   }
                }
             }
+
             // Add a class location field to the database.
             if(!empty($_POST['classLocAdd']) && !empty($_POST['classLocTB'])) {
                if($classLocation) {
@@ -1365,9 +1396,8 @@ if(!class_exists('LIR')) {
             }
             // Remove a class location field from the database.
             else if(!empty($_POST['classLocRemove'])) {
-               $temp = $_POST['classLocSB'] + 1;
-
-               if(!empty($temp)) {
+               // Make sure something was selected in the select box.
+               if(!empty($_POST['classLocSB']) || ($_POST['classLocSB'] === '0')) {
                   unset($classLocation[$_POST['classLocSB']]);
 
                   if($classLocation) {
@@ -1378,6 +1408,7 @@ if(!class_exists('LIR')) {
                   }
                }
             }
+
             // Add a class type field to the database.
             if(!empty($_POST['classTypeAdd']) && !empty($_POST['classTypeTB'])) {
                if($classType) {
@@ -1393,9 +1424,8 @@ if(!class_exists('LIR')) {
             }
             // Remove a class type field from the database.
             else if(!empty($_POST['classTypeRemove'])) {
-               $temp = $_POST['classTypeSB'] + 1;
-
-               if(!empty($temp)) {
+               // Make sure something was selected in the select box.
+               if(!empty($_POST['classTypeSB']) || ($_POST['classTypeSB'] === '0')) {
                   unset($classType[$_POST['classTypeSB']]);
 
                   if($classType) {
@@ -1406,6 +1436,7 @@ if(!class_exists('LIR')) {
                   }
                }
             }
+
             // Add an audience field to the database.
             if(!empty($_POST['audienceAdd']) && !empty($_POST['audienceTB'])) {
                if($audience) {
@@ -1421,9 +1452,8 @@ if(!class_exists('LIR')) {
             }
             // Remove an audience field from the database.
             else if(!empty($_POST['audienceRemove'])) {
-               $temp = $_POST['audienceSB'] + 1;
-
-               if(!empty($temp)) {
+               // Make sure something was selected in the select box.
+               if(!empty($_POST['audienceSB']) || ($_POST['audienceSB'] === '0')) {
                   unset($audience[$_POST['audienceSB']]);
 
                   if($audience) {
@@ -1434,8 +1464,9 @@ if(!class_exists('LIR')) {
                   }
                }
             }
+
             // Adds flag options to the database.
-            else if(!empty($_POST['flagSave'])) {
+            if(!empty($_POST['flagSave'])) {
                $flags = array(); // Don't want leftovers...
                $flagNames = preg_grep('/^flagName\d+/', array_keys($_POST));
 
@@ -1444,7 +1475,7 @@ if(!class_exists('LIR')) {
 
                   // Make sure flagName POST var exists.
                   if(!empty($_POST[$name])) {
-                     $flags[$_POST[$name]] = $_POST['flagEnabled'.$i];
+                     $flags[$_POST[$name]] = !empty($_POST['flagEnabled'.$i]) ? $_POST['flagEnabled'.$i] : '0';
                   }
                }
 
@@ -1645,7 +1676,7 @@ if(!class_exists('LIR')) {
          $input = array_map("trim", $input);
 
          $input['version'] = $this->options['version'];
-         $input['debug'] = ($input['debug'] == 'on') ? 'on' : '';
+         $input['debug'] = (isset($input['debug']) && ($input['debug'] == 'on')) ? 'on' : '';
          $input['name'] = (empty($input['name'])) ? self::$defaultOptions['name'] : sanitize_text_field($input['name']);
          $input['slug'] = (empty($input['slug'])) ? self::$defaultOptions['slug'] : sanitize_text_field($input['slug']);
          $input['intervalLength'] = (absint($input['intervalLength']) < 1) ? self::$defaultOptions['intervalLength'] : absint($input['intervalLength']);
@@ -1730,7 +1761,7 @@ if(!class_exists('LIR')) {
          if($position == NULL) { return; }
 
          // Get count of classes that need to be updated.
-         $count = $wpdb->get_var('SELECT COUNT(*) FROM '.$this->tables['posts'].' WHERE DATE(class_end) < DATE(NOW()) AND attendance IS NULL AND owner_id = '.$current_user->id);
+         $count = $wpdb->get_var('SELECT COUNT(*) FROM '.$this->tables['posts'].' WHERE DATE(class_end) < DATE(NOW()) AND attendance IS NULL AND owner_id = '.$current_user->ID);
          // If 0 notifications we still want to update the menu, just in case (ex: last notification was handled and menu needed to be updated to reflect that 1 -> 0).
          $notifications = $count ? ' <span class="update-plugins count-'.$count.'"><span class="update-count">'.$count.'</span></span>' : '';
          $menu[$position][0] = $this->options['slug'].$notifications; // Rewrite the entire name in case this function is called multiple times.
