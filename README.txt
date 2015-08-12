@@ -93,7 +93,7 @@ Initial release so why not install?
 == Changelog ==
 
 = 1.1.3 =
-* Doesn't look for WP_UNINSTALL_PLUGIN flag in the unintall method now.
+* Doesn't look for WP_UNINSTALL_PLUGIN flag in the uninstall method now.
 * Activation, deactivation, and uninstall hooks now reference the class name instead of 'this'.
 
 = 1.1.2 =
