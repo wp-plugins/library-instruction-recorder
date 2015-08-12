@@ -3,8 +3,8 @@ Contributors: mbrooks34
 Donate link: http://library.gsu.edu/giving/
 Tags: library, instruction, teaching, library instruction recorder, instruction scheduling, library instruction, bibliographic instruction
 Requires at least: 3.6
-Tested up to: 3.9.3
-Stable tag: 1.1.2
+Tested up to: 4.0.7
+Stable tag: 1.1.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -69,6 +69,9 @@ You can submit issue tickets to our [Bitbucket issue tracker](https://bitbucket.
 
 == Upgrade Notice ==
 
+= 1.1.3 =
+Fixes the uninstaller!
+
 = 1.1.2 =
 Fixed a lot of warnings that PHP was throwing.
 
@@ -88,6 +91,10 @@ Fixes a few bugs including a timezone related bug.
 Initial release so why not install?
 
 == Changelog ==
+
+= 1.1.3 =
+* Doesn't look for WP_UNINSTALL_PLUGIN flag in the unintall method now.
+* Activation, deactivation, and uninstall hooks now reference the class name instead of 'this'.
 
 = 1.1.2 =
 * Fixed a TON of undefined index errors!

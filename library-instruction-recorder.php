@@ -3,7 +3,7 @@
    Plugin Name: Library Instruction Recorder
    Plugin URI: http://bitbucket.org/gsulibwebmaster/library-instruction-recorder
    Description: A plugin for recording library instruction events and their associated data.
-   Version: 1.1.2
+   Version: 1.1.3
    Author: Georgia State University Library
    Author URI: http://library.gsu.edu/
    License: GPLv3
@@ -38,7 +38,7 @@ if(!class_exists('LIR')) {
       const SLUG = 'LIR';
       const OPTIONS = 'lir_options';
       const OPTIONS_GROUP = 'lir_options_group';
-      const VERSION = '1.1.2';
+      const VERSION = '1.1.3';
       const MIN_VERSION = '3.6';
       const TABLE_POSTS = '_posts';
       const TABLE_META = '_meta';
@@ -63,9 +63,9 @@ if(!class_exists('LIR')) {
       */
       public function __construct() {
          // Registration hooks.
-         register_activation_hook(__FILE__, array(&$this, 'activationHook'));
-         register_deactivation_hook(__FILE__, array(&$this, 'deactivationHook'));
-         register_uninstall_hook(__FILE__, array(&$this, 'uninstallHook'));
+         register_activation_hook(__FILE__, array('LIR', 'activationHook'));
+         register_deactivation_hook(__FILE__, array('LIR', 'deactivationHook'));
+         register_uninstall_hook(__FILE__, array('LIR', 'uninstallHook'));
 
          // Actions and filters.
          add_action('admin_menu', array(&$this, 'createMenu'));
@@ -219,7 +219,7 @@ if(!class_exists('LIR')) {
             <activationHook> and <deactivationHook>
       */
       public static function uninstallHook() {
-         if(!current_user_can('manage_options') || !defined('WP_UNINSTALL_PLUGIN')) {
+         if(!current_user_can('manage_options')) {
             wp_die('You do not have sufficient permissions to access this page.');
          }
 
